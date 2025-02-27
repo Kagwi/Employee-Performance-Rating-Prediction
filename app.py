@@ -3,8 +3,8 @@ import pandas as pd
 import joblib
 
 # Load the trained model and preprocessing artifacts
-model = joblib.load('best_model_random_forest.pkl')
-scaler = joblib.load('scaler.pkl')  # Ensure you saved the scaler during training
+model = joblib.load('best_model_random_forest.pkl')  # Make sure this is the actual model object
+scaler = joblib.load('scaler.pkl')  # Only include if you actually used scaling in training
 
 # Create categorical mappings (must match what was used in training)
 CATEGORICAL_MAPPINGS = {
@@ -74,10 +74,25 @@ if submit_button:
     
     # Create DataFrame and ensure column order matches training data
     input_df = pd.DataFrame([input_data])
-    input_df = input_df[model.feature_names_in_]  # Ensure column order matches
     
-    # Apply scaling
-    scaled_input = scaler.transform(input_df)
+    # Align columns with expected features (modified to handle older scikit-learn versions)
+    try:
+        # For scikit-learn >= 1.0
+        input_df = input_df[model.feature_names_in_]
+    except AttributeError:
+        # For older versions, use the original feature order
+        input_df = input_df[['EmpEnvironmentSatisfaction', 'EmpJobSatisfaction', 'EmpLastSalaryHikePercent',
+                            'TotalWorkExperienceInYears', 'ExperienceYearsAtThisCompany',
+                            'ExperienceYearsInCurrentRole', 'EmpJobLevel', 'YearsSinceLastPromotion',
+                            'YearsWithCurrManager', 'EmpDepartment', 'EmpWorkLifeBalance',
+                            'BusinessTravelFrequency', 'EducationBackground', 'TrainingTimesLastYear',
+                            'Gender']]
+    
+    # Apply scaling if used in training
+    if 'scaler' in locals():
+        scaled_input = scaler.transform(input_df)
+    else:
+        scaled_input = input_df
     
     # Make prediction
     prediction = model.predict(scaled_input)
