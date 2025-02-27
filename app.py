@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 
 # Load the trained model
-model = joblib.load('best_model_performance_rating.pkl')
+model = joblib.load('best_model_random_forest.pkl')
 
 # Configure the Streamlit app
 st.set_page_config(page_title="Employee Performance Rating Predictor", layout="wide")
