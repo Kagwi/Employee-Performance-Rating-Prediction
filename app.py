@@ -2,11 +2,10 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Load the trained model and preprocessing artifacts
-model = joblib.load('best_model_random_forest.pkl')  # Make sure this is the actual model object
-scaler = joblib.load('scaler.pkl')  # Only include if you actually used scaling in training
+# Load the trained model
+model = joblib.load('best_model_random_forest.pkl')
 
-# Create categorical mappings (must match what was used in training)
+# Categorical mappings (must match what was used during training)
 CATEGORICAL_MAPPINGS = {
     'EmpDepartment': {
         'Sales': 0, 'R&D': 1, 'HR': 2, 'Marketing': 3, 'Technical': 4
@@ -53,7 +52,7 @@ with st.form("employee_details"):
     submit_button = st.form_submit_button("Predict Performance Rating")
 
 if submit_button:
-    # Convert categorical features to numerical using mappings
+    # Convert categorical features to numerical
     input_data = {
         'EmpEnvironmentSatisfaction': EmpEnvironmentSatisfaction,
         'EmpJobSatisfaction': EmpJobSatisfaction,
@@ -72,30 +71,14 @@ if submit_button:
         'Gender': CATEGORICAL_MAPPINGS['Gender'][Gender]
     }
     
-    # Create DataFrame and ensure column order matches training data
+    # Create DataFrame and ensure correct column order
     input_df = pd.DataFrame([input_data])
     
-    # Align columns with expected features (modified to handle older scikit-learn versions)
-    try:
-        # For scikit-learn >= 1.0
-        input_df = input_df[model.feature_names_in_]
-    except AttributeError:
-        # For older versions, use the original feature order
-        input_df = input_df[['EmpEnvironmentSatisfaction', 'EmpJobSatisfaction', 'EmpLastSalaryHikePercent',
-                            'TotalWorkExperienceInYears', 'ExperienceYearsAtThisCompany',
-                            'ExperienceYearsInCurrentRole', 'EmpJobLevel', 'YearsSinceLastPromotion',
-                            'YearsWithCurrManager', 'EmpDepartment', 'EmpWorkLifeBalance',
-                            'BusinessTravelFrequency', 'EducationBackground', 'TrainingTimesLastYear',
-                            'Gender']]
-    
-    # Apply scaling if used in training
-    if 'scaler' in locals():
-        scaled_input = scaler.transform(input_df)
-    else:
-        scaled_input = input_df
+    # Align columns with model's expected features
+    input_df = input_df[model.feature_names_in_]
     
     # Make prediction
-    prediction = model.predict(scaled_input)
+    prediction = model.predict(input_df)
     
     # Display results
     st.subheader("Prediction Result")
