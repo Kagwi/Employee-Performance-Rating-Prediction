@@ -1,13 +1,32 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import numpy as np
 
-# Load the trained model
-model = joblib.load('best_model_random_forest.pkl')
+# Load the trained model with error handling
+try:
+    model = joblib.load('best_model_random_forest.pkl')
+except FileNotFoundError:
+    st.error("Model file not found. Please ensure 'best_model_random_forest.pkl' exists.")
+    st.stop()
+except Exception as e:
+    st.error(f"Error loading model: {e}")
+    st.stop()
 
 # Configure page
 st.set_page_config(page_title="Employee Attrition Predictor", layout="wide")
 st.title("Employee Attrition Prediction")
+
+# Predefined mappings for categorical variables
+category_mappings = {
+    "Gender": {"Male": 0, "Female": 1},
+    "EducationBackground": {"Life Sciences": 0, "Medical": 1, "Technical Degree": 2, "Human Resources": 3, "Other": 4},
+    "MaritalStatus": {"Single": 0, "Married": 1, "Divorced": 2},
+    "EmpDepartment": {"Sales": 0, "R&D": 1, "HR": 2, "Marketing": 3, "Technical": 4},
+    "EmpJobRole": {"Manager": 0, "Researcher": 1, "Sales Executive": 2, "Technician": 3, "HR Specialist": 4},
+    "BusinessTravelFrequency": {"Travel_Rarely": 0, "Travel_Frequently": 1, "Non-Travel": 2},
+    "OverTime": {"Yes": 1, "No": 0}
+}
 
 # Create input sections
 with st.form("employee_details"):
@@ -16,64 +35,39 @@ with st.form("employee_details"):
     with col1:
         EmpNumber = st.number_input("Employee Number", min_value=0)
         Age = st.number_input("Age", min_value=18, max_value=65)
-        Gender = st.selectbox("Gender", ["Male", "Female"])
-        EducationBackground = st.selectbox("Education Background", 
-            ["Life Sciences", "Medical", "Technical Degree", "Human Resources", "Other"])
-        MaritalStatus = st.selectbox("Marital Status", 
-            ["Single", "Married", "Divorced"])
-        EmpDepartment = st.selectbox("Department", 
-            ["Sales", "R&D", "HR", "Marketing", "Technical"])
-        
+        Gender = st.selectbox("Gender", list(category_mappings["Gender"].keys()))
+        EducationBackground = st.selectbox("Education Background", list(category_mappings["EducationBackground"].keys()))
+        MaritalStatus = st.selectbox("Marital Status", list(category_mappings["MaritalStatus"].keys()))
+        EmpDepartment = st.selectbox("Department", list(category_mappings["EmpDepartment"].keys()))
+    
     with col2:
-        EmpJobRole = st.selectbox("Job Role", 
-            ["Manager", "Researcher", "Sales Executive", "Technician", "HR Specialist"])
-        BusinessTravelFrequency = st.selectbox("Business Travel Frequency", 
-            ["Travel_Rarely", "Travel_Frequently", "Non-Travel"])
+        EmpJobRole = st.selectbox("Job Role", list(category_mappings["EmpJobRole"].keys()))
+        BusinessTravelFrequency = st.selectbox("Business Travel Frequency", list(category_mappings["BusinessTravelFrequency"].keys()))
         DistanceFromHome = st.number_input("Distance from Home (miles)", min_value=1)
         EmpEducationLevel = st.selectbox("Education Level", [1, 2, 3, 4, 5])
         EmpEnvironmentSatisfaction = st.selectbox("Environment Satisfaction", [1, 2, 3, 4])
         EmpHourlyRate = st.number_input("Hourly Rate", min_value=20, max_value=100)
-        
+    
     with col3:
         EmpJobInvolvement = st.selectbox("Job Involvement", [1, 2, 3, 4])
         EmpJobLevel = st.selectbox("Job Level", [1, 2, 3, 4, 5])
         EmpJobSatisfaction = st.selectbox("Job Satisfaction", [1, 2, 3, 4])
         NumCompaniesWorked = st.number_input("Companies Worked At", min_value=0)
-        OverTime = st.selectbox("Overtime", ["Yes", "No"])
+        OverTime = st.selectbox("Overtime", list(category_mappings["OverTime"].keys()))
         EmpLastSalaryHikePercent = st.number_input("Salary Hike (%)", min_value=0, max_value=25)
-
-    # Additional inputs
-    st.subheader("Additional Information")
-    col4, col5, col6 = st.columns(3)
     
-    with col4:
-        EmpRelationshipSatisfaction = st.selectbox("Relationship Satisfaction", [1, 2, 3, 4])
-        TotalWorkExperienceInYears = st.number_input("Total Work Experience (Years)", min_value=0)
-        
-    with col5:
-        TrainingTimesLastYear = st.number_input("Trainings Last Year", min_value=0)
-        EmpWorkLifeBalance = st.selectbox("Work-Life Balance", [1, 2, 3, 4])
-        
-    with col6:
-        ExperienceYearsAtThisCompany = st.number_input("Years at Company", min_value=0)
-        ExperienceYearsInCurrentRole = st.number_input("Years in Current Role", min_value=0)
-        YearsSinceLastPromotion = st.number_input("Years Since Last Promotion", min_value=0)
-        YearsWithCurrManager = st.number_input("Years with Current Manager", min_value=0)
-        PerformanceRating = st.selectbox("Performance Rating", [1, 2, 3, 4])
-
     submit_button = st.form_submit_button("Predict Attrition")
 
-# Create feature dictionary
+# Convert input data into a DataFrame
 if submit_button:
     input_data = {
-        'EmpNumber': EmpNumber,
         'Age': Age,
-        'Gender': Gender,
-        'EducationBackground': EducationBackground,
-        'MaritalStatus': MaritalStatus,
-        'EmpDepartment': EmpDepartment,
-        'EmpJobRole': EmpJobRole,
-        'BusinessTravelFrequency': BusinessTravelFrequency,
+        'Gender': category_mappings['Gender'][Gender],
+        'EducationBackground': category_mappings['EducationBackground'][EducationBackground],
+        'MaritalStatus': category_mappings['MaritalStatus'][MaritalStatus],
+        'EmpDepartment': category_mappings['EmpDepartment'][EmpDepartment],
+        'EmpJobRole': category_mappings['EmpJobRole'][EmpJobRole],
+        'BusinessTravelFrequency': category_mappings['BusinessTravelFrequency'][BusinessTravelFrequency],
         'DistanceFromHome': DistanceFromHome,
         'EmpEducationLevel': EmpEducationLevel,
         'EmpEnvironmentSatisfaction': EmpEnvironmentSatisfaction,
@@ -82,50 +76,40 @@ if submit_button:
         'EmpJobLevel': EmpJobLevel,
         'EmpJobSatisfaction': EmpJobSatisfaction,
         'NumCompaniesWorked': NumCompaniesWorked,
-        'OverTime': OverTime,
-        'EmpLastSalaryHikePercent': EmpLastSalaryHikePercent,
-        'EmpRelationshipSatisfaction': EmpRelationshipSatisfaction,
-        'TotalWorkExperienceInYears': TotalWorkExperienceInYears,
-        'TrainingTimesLastYear': TrainingTimesLastYear,
-        'EmpWorkLifeBalance': EmpWorkLifeBalance,
-        'ExperienceYearsAtThisCompany': ExperienceYearsAtThisCompany,
-        'ExperienceYearsInCurrentRole': ExperienceYearsInCurrentRole,
-        'YearsSinceLastPromotion': YearsSinceLastPromotion,
-        'YearsWithCurrManager': YearsWithCurrManager,
-        'PerformanceRating': PerformanceRating
+        'OverTime': category_mappings['OverTime'][OverTime],
+        'EmpLastSalaryHikePercent': EmpLastSalaryHikePercent
     }
     
-    # Convert to DataFrame
     input_df = pd.DataFrame([input_data])
     
-    # Make prediction
-    prediction = model.predict(input_df)
-    probability = model.predict_proba(input_df)[0][1]
+    # Ensure feature alignment
+    model_features = model.feature_names_in_ if hasattr(model, 'feature_names_in_') else input_df.columns
+    input_df = input_df.reindex(columns=model_features, fill_value=0)
     
-    # Display results
-    st.subheader("Prediction Results")
-    result_col1, result_col2 = st.columns(2)
-    
-    with result_col1:
-        st.metric("Predicted Attrition", 
-                 value="High Risk" if prediction[0] == 1 else "Low Risk",
-                 delta=f"{probability:.1%} confidence")
-    
-    with result_col2:
-        st.write("**Feature Importance**")
-        # Add feature importance visualization if available
-        # Note: Requires model to have feature_importances_ attribute
-        if hasattr(model, 'feature_importances_'):
-            importance_df = pd.DataFrame({
-                'Feature': input_df.columns,
-                'Importance': model.feature_importances_
-            }).sort_values('Importance', ascending=False)
-            
-            st.dataframe(importance_df.head(10))
-        else:
-            st.info("Feature importance not available for this model")
+    try:
+        prediction = model.predict(input_df)
+        probability = model.predict_proba(input_df)[0][1] if hasattr(model, 'predict_proba') else None
+        
+        st.subheader("Prediction Results")
+        result_col1, result_col2 = st.columns(2)
+        
+        with result_col1:
+            st.metric("Predicted Attrition", 
+                      value="High Risk" if prediction[0] == 1 else "Low Risk",
+                      delta=f"{(probability * 100):.1f}% confidence" if probability else "Confidence unavailable")
+        
+        with result_col2:
+            if hasattr(model, 'feature_importances_'):
+                importance_df = pd.DataFrame({
+                    'Feature': model_features,
+                    'Importance': model.feature_importances_
+                }).sort_values('Importance', ascending=False)
+                st.dataframe(importance_df.head(10))
+            else:
+                st.info("Feature importance not available for this model")
+    except Exception as e:
+        st.error(f"Error making prediction: {e}")
 
-# Add documentation
 st.sidebar.markdown("""
 **User Guide:**
 1. Fill in all employee details
