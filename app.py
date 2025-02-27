@@ -1,119 +1,186 @@
 import streamlit as st
-import pandas as pd
 import joblib
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+import seaborn as sns
 
-# Load the trained model with error handling
-try:
-    model = joblib.load('best_model_random_forest.pkl')
-except FileNotFoundError:
-    st.error("Model file not found. Please ensure 'best_model_random_forest.pkl' exists.")
-    st.stop()
-except Exception as e:
-    st.error(f"Error loading model: {e}")
-    st.stop()
+# Set page configuration
+st.set_page_config(
+    page_title="Employee Attrition Predictor",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
-# Configure page
-st.set_page_config(page_title="Employee Attrition Predictor", layout="wide")
-st.title("Employee Attrition Prediction")
-
-# Predefined mappings for categorical variables
-category_mappings = {
-    "Gender": {"Male": 0, "Female": 1},
-    "EducationBackground": {"Life Sciences": 0, "Medical": 1, "Technical Degree": 2, "Human Resources": 3, "Other": 4},
-    "MaritalStatus": {"Single": 0, "Married": 1, "Divorced": 2},
-    "EmpDepartment": {"Sales": 0, "R&D": 1, "HR": 2, "Marketing": 3, "Technical": 4},
-    "EmpJobRole": {"Manager": 0, "Researcher": 1, "Sales Executive": 2, "Technician": 3, "HR Specialist": 4},
-    "BusinessTravelFrequency": {"Travel_Rarely": 0, "Travel_Frequently": 1, "Non-Travel": 2},
-    "OverTime": {"Yes": 1, "No": 0}
-}
-
-# Create input sections
-with st.form("employee_details"):
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        EmpNumber = st.number_input("Employee Number", min_value=0)
-        Age = st.number_input("Age", min_value=18, max_value=65)
-        Gender = st.selectbox("Gender", list(category_mappings["Gender"].keys()))
-        EducationBackground = st.selectbox("Education Background", list(category_mappings["EducationBackground"].keys()))
-        MaritalStatus = st.selectbox("Marital Status", list(category_mappings["MaritalStatus"].keys()))
-        EmpDepartment = st.selectbox("Department", list(category_mappings["EmpDepartment"].keys()))
-    
-    with col2:
-        EmpJobRole = st.selectbox("Job Role", list(category_mappings["EmpJobRole"].keys()))
-        BusinessTravelFrequency = st.selectbox("Business Travel Frequency", list(category_mappings["BusinessTravelFrequency"].keys()))
-        DistanceFromHome = st.number_input("Distance from Home (miles)", min_value=1)
-        EmpEducationLevel = st.selectbox("Education Level", [1, 2, 3, 4, 5])
-        EmpEnvironmentSatisfaction = st.selectbox("Environment Satisfaction", [1, 2, 3, 4])
-        EmpHourlyRate = st.number_input("Hourly Rate", min_value=20, max_value=100)
-    
-    with col3:
-        EmpJobInvolvement = st.selectbox("Job Involvement", [1, 2, 3, 4])
-        EmpJobLevel = st.selectbox("Job Level", [1, 2, 3, 4, 5])
-        EmpJobSatisfaction = st.selectbox("Job Satisfaction", [1, 2, 3, 4])
-        NumCompaniesWorked = st.number_input("Companies Worked At", min_value=0)
-        OverTime = st.selectbox("Overtime", list(category_mappings["OverTime"].keys()))
-        EmpLastSalaryHikePercent = st.number_input("Salary Hike (%)", min_value=0, max_value=25)
-    
-    submit_button = st.form_submit_button("Predict Attrition")
-
-# Convert input data into a DataFrame
-if submit_button:
-    input_data = {
-        'Age': Age,
-        'Gender': category_mappings['Gender'][Gender],
-        'EducationBackground': category_mappings['EducationBackground'][EducationBackground],
-        'MaritalStatus': category_mappings['MaritalStatus'][MaritalStatus],
-        'EmpDepartment': category_mappings['EmpDepartment'][EmpDepartment],
-        'EmpJobRole': category_mappings['EmpJobRole'][EmpJobRole],
-        'BusinessTravelFrequency': category_mappings['BusinessTravelFrequency'][BusinessTravelFrequency],
-        'DistanceFromHome': DistanceFromHome,
-        'EmpEducationLevel': EmpEducationLevel,
-        'EmpEnvironmentSatisfaction': EmpEnvironmentSatisfaction,
-        'EmpHourlyRate': EmpHourlyRate,
-        'EmpJobInvolvement': EmpJobInvolvement,
-        'EmpJobLevel': EmpJobLevel,
-        'EmpJobSatisfaction': EmpJobSatisfaction,
-        'NumCompaniesWorked': NumCompaniesWorked,
-        'OverTime': category_mappings['OverTime'][OverTime],
-        'EmpLastSalaryHikePercent': EmpLastSalaryHikePercent
+# Custom CSS for modern design
+st.markdown("""
+    <style>
+    body {
+        background-color: #121212;
+        color: #E0E0E0;
     }
-    
-    input_df = pd.DataFrame([input_data])
-    
-    # Ensure feature alignment
-    model_features = model.feature_names_in_ if hasattr(model, 'feature_names_in_') else input_df.columns
-    input_df = input_df.reindex(columns=model_features, fill_value=0)
-    
-    try:
-        prediction = model.predict(input_df)
-        probability = model.predict_proba(input_df)[0][1] if hasattr(model, 'predict_proba') else None
-        
-        st.subheader("Prediction Results")
-        result_col1, result_col2 = st.columns(2)
-        
-        with result_col1:
-            st.metric("Predicted Attrition", 
-                      value="High Risk" if prediction[0] == 1 else "Low Risk",
-                      delta=f"{(probability * 100):.1f}% confidence" if probability else "Confidence unavailable")
-        
-        with result_col2:
-            if hasattr(model, 'feature_importances_'):
-                importance_df = pd.DataFrame({
-                    'Feature': model_features,
-                    'Importance': model.feature_importances_
-                }).sort_values('Importance', ascending=False)
-                st.dataframe(importance_df.head(10))
-            else:
-                st.info("Feature importance not available for this model")
-    except Exception as e:
-        st.error(f"Error making prediction: {e}")
+    .stTitle {
+        font-size: 32px;
+        color: #4A90E2;
+        font-weight: bold;
+    }
+    .stSubheader {
+        color: #4A90E2;
+        font-weight: 600;
+    }
+    .header {
+        font-size: 24px;
+        color: #4A90E2;
+        font-weight: bold;
+    }
+    .card {
+        background-color: #1F1F1F;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    .stButton>button {
+        background-color: #4A90E2;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 16px;
+    }
+    .stButton>button:hover {
+        background-color: #357ABD;
+    }
+    .stMetric {
+        color: #76E1A6;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-st.sidebar.markdown("""
-**User Guide:**
-1. Fill in all employee details
-2. Click 'Predict Attrition'
-3. View prediction results
-4. Check feature importance (if available)
-""")
+
+def load_model():
+    """Load the trained attrition prediction model."""
+    try:
+        return joblib.load("best_model_random_forest.pkl")
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None
+
+
+def plot_feature_importance(model):
+    """Plot feature importance for the model."""
+    if hasattr(model, 'feature_importances_'):
+        features = ['Age', 'Job Level', 'Total Working Years', 'Years at Company', 'Overtime', 'Job Satisfaction']
+        importance = model.feature_importances_
+
+        cmap = ListedColormap(sns.color_palette("coolwarm", len(features)).as_hex())
+
+        plt.figure(figsize=(8, 6), facecolor='#121212')
+        ax = plt.gca()
+        ax.set_facecolor('#121212')
+
+        bars = plt.bar(features, importance, color=cmap.colors, edgecolor='white', linewidth=0.7)
+        plt.title('Feature Importance in Prediction', color='white', pad=20, fontsize=16, fontweight='bold')
+        plt.ylabel('Importance Score', color='white', fontsize=12)
+        plt.xticks(color='white', fontsize=10, rotation=45)
+        plt.yticks(color='white', fontsize=10)
+
+        for i, bar in enumerate(bars):
+            height = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width() / 2, height + 0.02, f'{height:.1%}', ha='center', va='bottom', color='white', fontweight='bold', fontsize=10)
+
+        plt.grid(True, axis='y', linestyle='--', alpha=0.3, color='white')
+        for spine in ax.spines.values():
+            spine.set_color('white')
+
+        plt.tight_layout()
+        return plt
+    else:
+        st.warning("Feature importance data not available.")
+
+
+def display_hr_disclaimer():
+    """Display a disclaimer about the limitations of the prediction model."""
+    st.markdown("""
+        <div class="card">
+        <h3 style="color: #FF4B4B;">HR Disclaimer</h3>
+        <p style="color: white; font-size: 14px;">
+        This tool provides a prediction for employee attrition risk based on available data.
+        It should not be used as the sole determinant for HR decisions. For best results,
+        consult HR professionals and consider other qualitative factors.
+        </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+
+def main():
+    st.title("Employee Attrition Predictor")
+    st.markdown('<p class="header">AI-Powered Employee Retention Insights</p>', unsafe_allow_html=True)
+
+    # Load the model
+    model = load_model()
+    if model is None:
+        return
+
+    # Display disclaimer
+    display_hr_disclaimer()
+
+    st.info("This tool predicts employee attrition risk based on job-related metrics. Fill in the details below to analyze attrition risk.")
+
+    # User inputs
+    col1, col2 = st.columns(2)
+
+    with col1:
+        age = st.number_input("Age", min_value=18, max_value=65, value=30)
+        job_level = st.selectbox("Job Level", [1, 2, 3, 4, 5])
+        total_working_years = st.number_input("Total Working Years", min_value=0, max_value=40, value=5)
+
+    with col2:
+        years_at_company = st.number_input("Years at Company", min_value=0, max_value=40, value=3)
+        overtime = st.selectbox("Overtime", ["No", "Yes"])
+        job_satisfaction = st.selectbox("Job Satisfaction (1-Low to 4-High)", [1, 2, 3, 4])
+
+    if st.button("Analyze Risk"):
+        with st.spinner('Analyzing...'):
+            try:
+                # Encode categorical variables
+                overtime_encoded = 1 if overtime == "Yes" else 0
+
+                input_data = np.array([[age, job_level, total_working_years, years_at_company, overtime_encoded, job_satisfaction]])
+
+                # Prediction
+                prediction = model.predict(input_data)
+                prediction_proba = model.predict_proba(input_data)[0][1]
+
+                risk_level = "High Risk" if prediction[0] == 1 else "Low Risk"
+                st.metric("Risk Level", risk_level)
+                st.metric("Attrition Probability", f"{prediction_proba:.1%}")
+
+                # Recommendations
+                st.subheader("Retention Strategies")
+                if prediction[0] == 1:
+                    st.warning("""
+                        - Conduct one-on-one employee engagement meetings.
+                        - Provide opportunities for professional growth and training.
+                        - Offer flexible working arrangements to improve work-life balance.
+                        - Address job satisfaction concerns and career progression paths.
+                        - Implement recognition programs to appreciate employees' contributions.
+                    """)
+                else:
+                    st.success("""
+                        - Continue fostering a positive work environment.
+                        - Maintain an open feedback system with employees.
+                        - Encourage mentorship and leadership development programs.
+                        - Regularly review compensation and benefits.
+                    """)
+
+                # Display feature importance
+                st.subheader("Feature Importance Visualization")
+                st.pyplot(plot_feature_importance(model))
+
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+
+if __name__ == "__main__":
+    main()
