@@ -106,6 +106,8 @@ if submit_button:
     
     prediction = model.predict(input_df)[0]
     rating_text, rating_description = PERFORMANCE_RATING.get(prediction, (prediction, "Unknown"))
+
+    print(model.feature_names_in_)
     
     st.subheader("Prediction Result")
     st.metric("Predicted Performance Rating", f"{rating_text} ({prediction})")
