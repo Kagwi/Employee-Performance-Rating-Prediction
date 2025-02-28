@@ -48,7 +48,7 @@ with st.form("employee_details"):
                                         list(CATEGORICAL_MAPPINGS['EducationBackground'].keys()))
         TrainingTimesLastYear = st.number_input("Trainings Last Year", min_value=0)
         Gender = st.selectbox("Gender", list(CATEGORICAL_MAPPINGS['Gender'].keys()))
-        Attrition = st.selectbox("Attrition Status", ["No", "Yes"])  # Added Attrition input
+        Attrition = st.selectbox("Attrition Status", ["No", "Yes"])  # Keep Attrition input
 
     submit_button = st.form_submit_button("Predict Performance Rating")
 
@@ -70,14 +70,16 @@ if submit_button:
         'EducationBackground': CATEGORICAL_MAPPINGS['EducationBackground'][EducationBackground],
         'TrainingTimesLastYear': TrainingTimesLastYear,
         'Gender': CATEGORICAL_MAPPINGS['Gender'][Gender],
-        'Attrition': 1 if Attrition == "Yes" else 0  # Added Attrition conversion
+        'Attrition': 1 if Attrition == "Yes" else 0  # Keep Attrition in input data
     }
     
-    # Create DataFrame and ensure correct column order
+    # Create DataFrame with ALL features the model expects
+    # (Ensure the order matches the training data's feature order)
     input_df = pd.DataFrame([input_data])
-    
-    # Handle attribute error by using reindex instead of direct column selection
-    input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
+
+    # If your model was trained with `feature_names_in_`, use:
+    if hasattr(model, 'feature_names_in_'):
+        input_df = input_df[model.feature_names_in_]  # Align columns with training data
     
     # Make prediction
     prediction = model.predict(input_df)
