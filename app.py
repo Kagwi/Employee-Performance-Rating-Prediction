@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 
 # Load the trained model
-model = joblib.load('best_model_random_forest.pkl')
+model = joblib.load('best_model.pkl')
 
 # Categorical mappings (must match what was used during training)
 CATEGORICAL_MAPPINGS = {
