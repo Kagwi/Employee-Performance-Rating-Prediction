@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import matplotlib.pyplot as plt
 
 # Load the trained model
 model = joblib.load('best_model.pkl')
@@ -33,11 +34,15 @@ WORK_LIFE_BALANCE = {
 }
 
 PERFORMANCE_RATING = {
-    1: 'Low', 2: 'Good', 3: 'Excellent', 4: 'Outstanding'
+    1: ('Low', 'Needs significant improvement'),
+    2: ('Good', 'Meets expectations with room for growth'),
+    3: ('Excellent', 'Exceeds expectations'),
+    4: ('Outstanding', 'Far exceeds expectations')
 }
 
 st.set_page_config(page_title="Employee Performance Rating Predictor", layout="wide")
 st.title("Employee Performance Rating Prediction")
+st.markdown("---")
 
 with st.form("employee_details"):
     col1, col2, col3 = st.columns(3)
@@ -67,7 +72,6 @@ with st.form("employee_details"):
     submit_button = st.form_submit_button("Predict Performance Rating")
 
 if submit_button:
-    # Convert categorical features to numerical
     input_data = {
         'EmpEnvironmentSatisfaction': EmpEnvironmentSatisfaction,
         'EmpJobSatisfaction': EmpJobSatisfaction,
@@ -92,7 +96,21 @@ if submit_button:
     if hasattr(model, 'feature_names_in_'):
         input_df = input_df[model.feature_names_in_]
     
-    prediction = model.predict(input_df)
+    prediction = model.predict(input_df)[0]
+    rating_text, rating_description = PERFORMANCE_RATING.get(prediction, (prediction, "Unknown"))
     
     st.subheader("Prediction Result")
-    st.metric("Predicted Performance Rating", PERFORMANCE_RATING.get(prediction[0], prediction[0]))
+    st.metric("Predicted Performance Rating", f"{rating_text} ({prediction})")
+    st.write(f"**What this means:** {rating_description}")
+    
+    if hasattr(model, 'feature_importances_'):
+        st.subheader("Feature Importance")
+        importance_df = pd.DataFrame({"Feature": model.feature_names_in_, "Importance": model.feature_importances_})
+        importance_df = importance_df.sort_values(by="Importance", ascending=False)
+        
+        fig, ax = plt.subplots()
+        ax.barh(importance_df["Feature"], importance_df["Importance"], color='skyblue')
+        ax.set_xlabel("Importance Score")
+        ax.set_ylabel("Feature")
+        ax.set_title("Feature Importance for Performance Prediction")
+        st.pyplot(fig)
