@@ -1,25 +1,30 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
 
 # Load the trained model
 model = joblib.load('best_model.pkl')
 
-# Categorical mappings (must match what was used during training)
-CATEGORICAL_MAPPINGS = {
-    'EmpDepartment': {
-        'Sales': 0, 'HR': 1, 'Development': 2, 'Data Science': 3, 'R&D': 4, 'Finance': 5
-    },
-    'BusinessTravelFrequency': {
-        'Non-Travel': 0, 'Travel_Rarely': 1, 'Travel_Frequently': 2
-    },
-    'EducationBackground': {
-        'Life Sciences': 0, 'Medical': 1, 'Technical Degree': 2, 
-        'Human Resources': 3, 'Other': 4
-    },
-    'Gender': {'Male': 0, 'Female': 1}
+# Initialize label encoders for categorical variables
+label_encoders = {
+    'EmpDepartment': LabelEncoder(),
+    'BusinessTravelFrequency': LabelEncoder(),
+    'EducationBackground': LabelEncoder(),
+    'Gender': LabelEncoder()
 }
+
+# Fit label encoders with known categories
+category_mappings = {
+    'EmpDepartment': ['Sales', 'HR', 'Development', 'Data Science', 'R&D', 'Finance'],
+    'BusinessTravelFrequency': ['Non-Travel', 'Travel_Rarely', 'Travel_Frequently'],
+    'EducationBackground': ['Life Sciences', 'Medical', 'Technical Degree', 'Human Resources', 'Other'],
+    'Gender': ['Male', 'Female']
+}
+
+for col, classes in category_mappings.items():
+    label_encoders[col].fit(classes)
 
 EDUCATION_LEVELS = {
     1: 'Below College', 2: 'College', 3: 'Bachelor', 4: 'Master', 5: 'Doctor'
@@ -61,14 +66,14 @@ with st.form("employee_details"):
     
     with col3:
         YearsWithCurrManager = st.number_input("Years with Current Manager", min_value=0)
-        EmpDepartment = st.selectbox("Department", list(CATEGORICAL_MAPPINGS['EmpDepartment'].keys()))
+        EmpDepartment = st.selectbox("Department", category_mappings['EmpDepartment'])
         EmpWorkLifeBalance = st.selectbox("Work-Life Balance", list(WORK_LIFE_BALANCE.keys()), format_func=lambda x: WORK_LIFE_BALANCE[x])
-        BusinessTravelFrequency = st.selectbox("Business Travel Frequency", list(CATEGORICAL_MAPPINGS['BusinessTravelFrequency'].keys()))
-        EducationBackground = st.selectbox("Education Background", list(CATEGORICAL_MAPPINGS['EducationBackground'].keys()))
+        BusinessTravelFrequency = st.selectbox("Business Travel Frequency", category_mappings['BusinessTravelFrequency'])
+        EducationBackground = st.selectbox("Education Background", category_mappings['EducationBackground'])
         TrainingTimesLastYear = st.number_input("Trainings Last Year", min_value=0)
-        Gender = st.selectbox("Gender", list(CATEGORICAL_MAPPINGS['Gender'].keys()))
+        Gender = st.selectbox("Gender", category_mappings['Gender'])
         Attrition = st.selectbox("Attrition Status", ["No", "Yes"])
-
+    
     submit_button = st.form_submit_button("Predict Performance Rating")
 
 if submit_button:
@@ -82,12 +87,12 @@ if submit_button:
         'EmpJobLevel': EmpJobLevel,
         'YearsSinceLastPromotion': YearsSinceLastPromotion,
         'YearsWithCurrManager': YearsWithCurrManager,
-        'EmpDepartment': CATEGORICAL_MAPPINGS['EmpDepartment'][EmpDepartment],
+        'EmpDepartment': label_encoders['EmpDepartment'].transform([EmpDepartment])[0],
         'EmpWorkLifeBalance': EmpWorkLifeBalance,
-        'BusinessTravelFrequency': CATEGORICAL_MAPPINGS['BusinessTravelFrequency'][BusinessTravelFrequency],
-        'EducationBackground': CATEGORICAL_MAPPINGS['EducationBackground'][EducationBackground],
+        'BusinessTravelFrequency': label_encoders['BusinessTravelFrequency'].transform([BusinessTravelFrequency])[0],
+        'EducationBackground': label_encoders['EducationBackground'].transform([EducationBackground])[0],
         'TrainingTimesLastYear': TrainingTimesLastYear,
-        'Gender': CATEGORICAL_MAPPINGS['Gender'][Gender],
+        'Gender': label_encoders['Gender'].transform([Gender])[0],
         'Attrition': 1 if Attrition == "Yes" else 0
     }
     
