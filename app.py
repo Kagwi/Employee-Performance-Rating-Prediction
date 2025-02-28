@@ -107,8 +107,6 @@ if submit_button:
     prediction = model.predict(input_df)[0]
     rating_text, rating_description = PERFORMANCE_RATING.get(prediction, (prediction, "Unknown"))
 
-    print(model.feature_names_in_)
-    
     st.subheader("Prediction Result")
     st.metric("Predicted Performance Rating", f"{rating_text} ({prediction})")
     st.write(f"**What this means:** {rating_description}")
@@ -124,3 +122,5 @@ if submit_button:
         ax.set_ylabel("Feature")
         ax.set_title("Feature Importance for Performance Prediction")
         st.pyplot(fig)
+
+        print(model.feature_names_in_)
