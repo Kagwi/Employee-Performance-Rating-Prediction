@@ -47,41 +47,41 @@ PERFORMANCE_RATING = {
 }
 
 st.set_page_config(page_title="Employee Performance Rating Predictor", layout="wide")
-st.title("🌟 Employee Performance Rating Prediction 🌟")
+st.title("Employee Performance Rating Prediction")
 st.markdown("---")
 
 st.sidebar.image("https://source.unsplash.com/400x300/?business,team", use_column_width=True)
 st.sidebar.markdown("### About This App")
 st.sidebar.write("This app predicts employee performance ratings based on various factors.")
-st.sidebar.write("Adjust the inputs and hit the **Predict** button to get insights!")
+st.sidebar.write("Adjust the inputs and hit the Predict button to get insights!")
 
 with st.form("employee_details"):
     st.markdown("### Employee Details")
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        EmpEnvironmentSatisfaction = st.selectbox("🌿 Environment Satisfaction", list(SATISFACTION_LEVELS.keys()), format_func=lambda x: SATISFACTION_LEVELS[x])
-        EmpJobSatisfaction = st.selectbox("💼 Job Satisfaction", list(SATISFACTION_LEVELS.keys()), format_func=lambda x: SATISFACTION_LEVELS[x])
-        EmpLastSalaryHikePercent = st.number_input("💰 Salary Hike (%)", min_value=0, max_value=25)
-        TotalWorkExperienceInYears = st.number_input("👔 Total Work Experience (Years)", min_value=0)
+        EmpEnvironmentSatisfaction = st.selectbox("Environment Satisfaction", list(SATISFACTION_LEVELS.keys()), format_func=lambda x: SATISFACTION_LEVELS[x])
+        EmpJobSatisfaction = st.selectbox("Job Satisfaction", list(SATISFACTION_LEVELS.keys()), format_func=lambda x: SATISFACTION_LEVELS[x])
+        EmpLastSalaryHikePercent = st.number_input("Salary Hike (%)", min_value=0, max_value=25)
+        TotalWorkExperienceInYears = st.number_input("Total Work Experience (Years)", min_value=0)
     
     with col2:
-        ExperienceYearsAtThisCompany = st.number_input("🏢 Years at Company", min_value=0)
-        ExperienceYearsInCurrentRole = st.number_input("🔄 Years in Current Role", min_value=0)
-        EmpJobLevel = st.selectbox("📚 Job Level", list(EDUCATION_LEVELS.keys()), format_func=lambda x: EDUCATION_LEVELS[x])
-        YearsSinceLastPromotion = st.number_input("📈 Years Since Last Promotion", min_value=0)
+        ExperienceYearsAtThisCompany = st.number_input("Years at Company", min_value=0)
+        ExperienceYearsInCurrentRole = st.number_input("Years in Current Role", min_value=0)
+        EmpJobLevel = st.selectbox("Job Level", list(EDUCATION_LEVELS.keys()), format_func=lambda x: EDUCATION_LEVELS[x])
+        YearsSinceLastPromotion = st.number_input("Years Since Last Promotion", min_value=0)
     
     with col3:
-        YearsWithCurrManager = st.number_input("👥 Years with Current Manager", min_value=0)
-        EmpDepartment = st.selectbox("🏢 Department", category_mappings['EmpDepartment'])
-        EmpWorkLifeBalance = st.selectbox("⚖️ Work-Life Balance", list(WORK_LIFE_BALANCE.keys()), format_func=lambda x: WORK_LIFE_BALANCE[x])
-        BusinessTravelFrequency = st.selectbox("✈️ Business Travel Frequency", category_mappings['BusinessTravelFrequency'])
-        EducationBackground = st.selectbox("🎓 Education Background", category_mappings['EducationBackground'])
-        TrainingTimesLastYear = st.number_input("📑 Trainings Last Year", min_value=0)
-        Gender = st.selectbox("⚧ Gender", category_mappings['Gender'])
-        Attrition = st.selectbox("❌ Attrition Status", ["No", "Yes"])
+        YearsWithCurrManager = st.number_input("Years with Current Manager", min_value=0)
+        EmpDepartment = st.selectbox("Department", category_mappings['EmpDepartment'])
+        EmpWorkLifeBalance = st.selectbox("Work-Life Balance", list(WORK_LIFE_BALANCE.keys()), format_func=lambda x: WORK_LIFE_BALANCE[x])
+        BusinessTravelFrequency = st.selectbox("Business Travel Frequency", category_mappings['BusinessTravelFrequency'])
+        EducationBackground = st.selectbox("Education Background", category_mappings['EducationBackground'])
+        TrainingTimesLastYear = st.number_input("Trainings Last Year", min_value=0)
+        Gender = st.selectbox("Gender", category_mappings['Gender'])
+        Attrition = st.selectbox("Attrition Status", ["No", "Yes"])
     
-    submit_button = st.form_submit_button("🚀 Predict Performance Rating")
+    submit_button = st.form_submit_button("Predict Performance Rating")
 
 if submit_button:
     input_data = {
@@ -111,12 +111,12 @@ if submit_button:
     prediction = model.predict(input_df)[0]
     rating_text, rating_description = PERFORMANCE_RATING.get(prediction, (prediction, "Unknown"))
     
-    st.subheader("🎯 Prediction Result")
+    st.subheader("Prediction Result")
     st.metric("Predicted Performance Rating", f"{rating_text} ({prediction})")
     st.write(f"**What this means:** {rating_description}")
     
     if hasattr(model, 'feature_importances_'):
-        st.subheader("🔥 Feature Importance")
+        st.subheader("Feature Importance")
         importance_df = pd.DataFrame({"Feature": model.feature_names_in_, "Importance": model.feature_importances_})
         importance_df = importance_df.sort_values(by="Importance", ascending=False)
         
