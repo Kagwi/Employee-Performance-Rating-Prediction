@@ -3,26 +3,12 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import LabelEncoder
 
+# Load trained model
 model = joblib.load('best_model.pkl')
 
-label_encoders = {
-    'EmpDepartment': LabelEncoder(),
-    'BusinessTravelFrequency': LabelEncoder(),
-    'EducationBackground': LabelEncoder(),
-    'Gender': LabelEncoder()
-}
-
-category_mappings = {
-    'EmpDepartment': ['Sales', 'HR', 'Development', 'Data Science', 'R&D', 'Finance'],
-    'BusinessTravelFrequency': ['Non-Travel', 'Travel_Rarely', 'Travel_Frequently'],
-    'EducationBackground': ['Life Sciences', 'Medical', 'Technical Degree', 'Human Resources', 'Other'],
-    'Gender': ['Male', 'Female']
-}
-
-for col, classes in category_mappings.items():
-    label_encoders[col].fit(classes)
+# Load pre-trained label encoders
+label_encoders = joblib.load('label_encoders.pkl')
 
 EDUCATION_LEVELS = {
     1: 'Below College', 2: 'College', 3: 'Bachelor', 4: 'Master', 5: 'Doctor'
@@ -69,12 +55,12 @@ with st.form("employee_details"):
     
     with col3:
         YearsWithCurrManager = st.number_input("Years with Current Manager", min_value=0)
-        EmpDepartment = st.selectbox("Department", category_mappings['EmpDepartment'])
+        EmpDepartment = st.selectbox("Department", label_encoders['EmpDepartment'].classes_)
         EmpWorkLifeBalance = st.selectbox("Work-Life Balance", list(WORK_LIFE_BALANCE.keys()), format_func=lambda x: WORK_LIFE_BALANCE[x])
-        BusinessTravelFrequency = st.selectbox("Business Travel Frequency", category_mappings['BusinessTravelFrequency'])
-        EducationBackground = st.selectbox("Education Background", category_mappings['EducationBackground'])
+        BusinessTravelFrequency = st.selectbox("Business Travel Frequency", label_encoders['BusinessTravelFrequency'].classes_)
+        EducationBackground = st.selectbox("Education Background", label_encoders['EducationBackground'].classes_)
         TrainingTimesLastYear = st.number_input("Trainings Last Year", min_value=0)
-        Gender = st.selectbox("Gender", category_mappings['Gender'])
+        Gender = st.selectbox("Gender", label_encoders['Gender'].classes_)
         Attrition = st.selectbox("Attrition Status", ["No", "Yes"])
     
     submit_button = st.form_submit_button("Predict Performance Rating")
@@ -122,5 +108,3 @@ if submit_button:
         ax.set_ylabel("Feature")
         ax.set_title("Feature Importance for Performance Prediction")
         st.pyplot(fig)
-
-        print(model.feature_names_in_)
