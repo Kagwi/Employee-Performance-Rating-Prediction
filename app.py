@@ -3,10 +3,9 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder
 
 model = joblib.load('best_model.pkl')
-scaler = joblib.load('scaler.pkl')  
 
 label_encoders = {
     'EmpDepartment': LabelEncoder(),
@@ -105,10 +104,7 @@ if submit_button:
     if hasattr(model, 'feature_names_in_'):
         input_df = input_df[model.feature_names_in_]
     
-    # Scale numerical features
-    input_df_scaled = scaler.transform(input_df)
-    
-    prediction = model.predict(input_df_scaled)[0]
+    prediction = model.predict(input_df)[0]
     rating_text, rating_description = PERFORMANCE_RATING.get(prediction, (prediction, "Unknown"))
     
     st.subheader("Prediction Result")
