@@ -10,6 +10,7 @@ model = joblib.load('best_model.pkl')
 # Load pre-trained label encoders
 label_encoders = joblib.load('label_encoders.pkl')
 
+# Define mappings for categorical features
 EDUCATION_LEVELS = {
     1: 'Below College', 2: 'College', 3: 'Bachelor', 4: 'Master', 5: 'Doctor'
 }
@@ -67,29 +68,38 @@ with st.form("employee_details"):
 
 if submit_button:
     input_data = {
-        'EmpEnvironmentSatisfaction': EmpEnvironmentSatisfaction,
-        'EmpJobSatisfaction': EmpJobSatisfaction,
-        'EmpLastSalaryHikePercent': EmpLastSalaryHikePercent,
-        'TotalWorkExperienceInYears': TotalWorkExperienceInYears,
-        'ExperienceYearsAtThisCompany': ExperienceYearsAtThisCompany,
-        'ExperienceYearsInCurrentRole': ExperienceYearsInCurrentRole,
-        'EmpJobLevel': EmpJobLevel,
-        'YearsSinceLastPromotion': YearsSinceLastPromotion,
-        'YearsWithCurrManager': YearsWithCurrManager,
-        'EmpDepartment': label_encoders['EmpDepartment'].transform([EmpDepartment])[0],
-        'EmpWorkLifeBalance': EmpWorkLifeBalance,
-        'BusinessTravelFrequency': label_encoders['BusinessTravelFrequency'].transform([BusinessTravelFrequency])[0],
-        'EducationBackground': label_encoders['EducationBackground'].transform([EducationBackground])[0],
-        'TrainingTimesLastYear': TrainingTimesLastYear,
-        'Gender': label_encoders['Gender'].transform([Gender])[0],
-        'Attrition': 1 if Attrition == "Yes" else 0
+        "EmpEnvironmentSatisfaction": EmpEnvironmentSatisfaction,
+        "EmpJobSatisfaction": EmpJobSatisfaction,
+        "EmpLastSalaryHikePercent": EmpLastSalaryHikePercent,
+        "TotalWorkExperienceInYears": TotalWorkExperienceInYears,
+        "ExperienceYearsAtThisCompany": ExperienceYearsAtThisCompany,
+        "ExperienceYearsInCurrentRole": ExperienceYearsInCurrentRole,
+        "EmpJobLevel": EmpJobLevel,
+        "YearsSinceLastPromotion": YearsSinceLastPromotion,
+        "YearsWithCurrManager": YearsWithCurrManager,
+        "EmpDepartment": label_encoders['EmpDepartment'].transform([EmpDepartment])[0],
+        "EmpWorkLifeBalance": EmpWorkLifeBalance,
+        "Attrition": 1 if Attrition == "Yes" else 0,
+        "BusinessTravelFrequency": label_encoders['BusinessTravelFrequency'].transform([BusinessTravelFrequency])[0],
+        "EducationBackground": label_encoders['EducationBackground'].transform([EducationBackground])[0],
+        "TrainingTimesLastYear": TrainingTimesLastYear,
+        "Gender": label_encoders['Gender'].transform([Gender])[0]
     }
     
     input_df = pd.DataFrame([input_data])
 
-    if hasattr(model, 'feature_names_in_'):
-        input_df = input_df[model.feature_names_in_]
+    # Ensure correct feature order before prediction
+    feature_order = [
+        "EmpEnvironmentSatisfaction", "EmpJobSatisfaction", "EmpLastSalaryHikePercent", 
+        "TotalWorkExperienceInYears", "ExperienceYearsAtThisCompany", "ExperienceYearsInCurrentRole", 
+        "EmpJobLevel", "YearsSinceLastPromotion", "YearsWithCurrManager", "EmpDepartment", 
+        "EmpWorkLifeBalance", "Attrition", "BusinessTravelFrequency", "EducationBackground", 
+        "TrainingTimesLastYear", "Gender"
+    ]
     
+    input_df = input_df[feature_order]  # Reorder columns
+
+    # Make prediction
     prediction = model.predict(input_df)[0]
     rating_text, rating_description = PERFORMANCE_RATING.get(prediction, (prediction, "Unknown"))
 
@@ -97,11 +107,12 @@ if submit_button:
     st.metric("Predicted Performance Rating", f"{rating_text} ({prediction})")
     st.write(f"**What this means:** {rating_description}")
     
+    # Display feature importance if available
     if hasattr(model, 'feature_importances_'):
         st.subheader("Feature Importance")
-        importance_df = pd.DataFrame({"Feature": model.feature_names_in_, "Importance": model.feature_importances_})
+        importance_df = pd.DataFrame({"Feature": feature_order, "Importance": model.feature_importances_})
         importance_df = importance_df.sort_values(by="Importance", ascending=False)
-        
+
         fig, ax = plt.subplots()
         sns.barplot(y=importance_df["Feature"], x=importance_df["Importance"], palette="viridis", ax=ax)
         ax.set_xlabel("Importance Score")
