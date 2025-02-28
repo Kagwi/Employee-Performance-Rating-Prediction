@@ -5,11 +5,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
-# Load the trained model and scaler
 model = joblib.load('best_model.pkl')
-scaler = joblib.load('scaler.pkl')  # Load the StandardScaler used during training
+scaler = joblib.load('scaler.pkl')  
 
-# Initialize label encoders for categorical variables
 label_encoders = {
     'EmpDepartment': LabelEncoder(),
     'BusinessTravelFrequency': LabelEncoder(),
@@ -17,7 +15,6 @@ label_encoders = {
     'Gender': LabelEncoder()
 }
 
-# Fit label encoders with known categories
 category_mappings = {
     'EmpDepartment': ['Sales', 'HR', 'Development', 'Data Science', 'R&D', 'Finance'],
     'BusinessTravelFrequency': ['Non-Travel', 'Travel_Rarely', 'Travel_Frequently'],
@@ -51,7 +48,6 @@ st.set_page_config(page_title="Employee Performance Rating Predictor", layout="w
 st.title("Employee Performance Rating Prediction")
 st.markdown("---")
 
-st.sidebar.image("https://source.unsplash.com/400x300/?business,team", use_column_width=True)
 st.sidebar.markdown("### About This App")
 st.sidebar.write("This app predicts employee performance ratings based on various factors.")
 st.sidebar.write("Adjust the inputs and hit the Predict button to get insights!")
