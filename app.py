@@ -48,7 +48,8 @@ with st.form("employee_details"):
                                         list(CATEGORICAL_MAPPINGS['EducationBackground'].keys()))
         TrainingTimesLastYear = st.number_input("Trainings Last Year", min_value=0)
         Gender = st.selectbox("Gender", list(CATEGORICAL_MAPPINGS['Gender'].keys()))
-    
+        Attrition = st.selectbox("Attrition Status", ["No", "Yes"])  # Added Attrition input
+
     submit_button = st.form_submit_button("Predict Performance Rating")
 
 if submit_button:
@@ -68,14 +69,15 @@ if submit_button:
         'BusinessTravelFrequency': CATEGORICAL_MAPPINGS['BusinessTravelFrequency'][BusinessTravelFrequency],
         'EducationBackground': CATEGORICAL_MAPPINGS['EducationBackground'][EducationBackground],
         'TrainingTimesLastYear': TrainingTimesLastYear,
-        'Gender': CATEGORICAL_MAPPINGS['Gender'][Gender]
+        'Gender': CATEGORICAL_MAPPINGS['Gender'][Gender],
+        'Attrition': 1 if Attrition == "Yes" else 0  # Added Attrition conversion
     }
     
     # Create DataFrame and ensure correct column order
     input_df = pd.DataFrame([input_data])
     
-    # Align columns with model's expected features
-    input_df = input_df[model.feature_names_in_]
+    # Handle attribute error by using reindex instead of direct column selection
+    input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
     
     # Make prediction
     prediction = model.predict(input_df)
