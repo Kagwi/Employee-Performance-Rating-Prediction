@@ -38,47 +38,38 @@ st.sidebar.markdown("### About This App")
 st.sidebar.write("This app predicts employee performance ratings based on various factors.")
 st.sidebar.write("Adjust the inputs and hit the Predict button to get insights!")
 
-st.markdown("## 📌 How to Use the Application")
-st.write("To ensure accurate predictions, please follow these guidelines while entering information:")
+# Visually appealing explanation section
+st.markdown("## How to Use the Application")
+st.markdown("Use the following guide to understand input values:")
 
-st.markdown("### 🏢 Job-Related Inputs")
-st.markdown("- **Job Level**: Select the employee's job level:")
-st.write("  - 1️⃣ Entry Level")
-st.write("  - 2️⃣ Mid Level")
-st.write("  - 3️⃣ Senior Level")
-st.write("  - 4️⃣ Executive Level")
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown("### Job Level")
+    st.markdown("- 1️⃣ Entry Level")
+    st.markdown("- 2️⃣ Mid Level")
+    st.markdown("- 3️⃣ Senior Level")
+    st.markdown("- 4️⃣ Executive Level")
 
-st.markdown("### 😊 Satisfaction Levels")
-st.markdown("- **Environment Satisfaction** and **Job Satisfaction** ratings are categorized as follows:")
-st.write("  - 1️⃣ Low")
-st.write("  - 2️⃣ Medium")
-st.write("  - 3️⃣ High")
-st.write("  - 4️⃣ Very High")
+    st.markdown("### Job & Environment Satisfaction")
+    st.markdown("- 1️⃣ Low")
+    st.markdown("- 2️⃣ Medium")
+    st.markdown("- 3️⃣ High")
+    st.markdown("- 4️⃣ Very High")
 
-st.markdown("### ⚖️ Work-Life Balance")
-st.write("- Select an appropriate rating for the work-life balance:")
-st.write("  - 1️⃣ Bad")
-st.write("  - 2️⃣ Good")
-st.write("  - 3️⃣ Better")
-st.write("  - 4️⃣ Best")
+with col2:
+    st.markdown("### Work-Life Balance")
+    st.markdown("- 1️⃣ Bad")
+    st.markdown("- 2️⃣ Good")
+    st.markdown("- 3️⃣ Better")
+    st.markdown("- 4️⃣ Best")
+    
+    st.markdown("### Performance Rating Explanation")
+    for key, value in PERFORMANCE_RATING.items():
+        st.markdown(f"- {key}️⃣ {value[0]}: *{value[1]}*")
 
-st.markdown("### 💰 Salary & Experience")
-st.write("- **Salary Hike (%)**: Enter the percentage increase in salary (0-25%).")
-st.write("- **Total Work Experience (Years)**: Enter the employee’s total years of work experience.")
-st.write("- **Years at Company**: Enter the number of years the employee has worked in this company.")
-st.write("- **Years in Current Role**: Enter how many years the employee has been in their current role.")
-st.write("- **Years Since Last Promotion**: Enter the number of years since the employee's last promotion.")
-st.write("- **Years with Current Manager**: Enter the number of years working under the current manager.")
-
-st.markdown("### 🏢 Other Employee Attributes")
-st.write("- **Department**: Select the department where the employee works.")
-st.write("- **Business Travel Frequency**: Select how frequently the employee travels for work.")
-st.write("- **Education Background**: Choose the educational background of the employee.")
-st.write("- **Training Times Last Year**: Enter how many training sessions the employee attended in the last year.")
-st.write("- **Gender**: Select the employee’s gender.")
-st.write("- **Attrition Status**: Choose whether the employee has left the company or is still employed.")
 st.markdown("---")
 
+# Form for user input
 with st.form("employee_details"):
     st.markdown("### Employee Details")
     col1, col2, col3 = st.columns(3)
@@ -108,18 +99,48 @@ with st.form("employee_details"):
     submit_button = st.form_submit_button("Predict Performance Rating")
 
 if submit_button:
+    input_data = {
+        "EmpEnvironmentSatisfaction": EmpEnvironmentSatisfaction,
+        "EmpJobSatisfaction": EmpJobSatisfaction,
+        "EmpLastSalaryHikePercent": EmpLastSalaryHikePercent,
+        "TotalWorkExperienceInYears": TotalWorkExperienceInYears,
+        "ExperienceYearsAtThisCompany": ExperienceYearsAtThisCompany,
+        "ExperienceYearsInCurrentRole": ExperienceYearsInCurrentRole,
+        "EmpJobLevel": EmpJobLevel,
+        "YearsSinceLastPromotion": YearsSinceLastPromotion,
+        "YearsWithCurrManager": YearsWithCurrManager,
+        "EmpDepartment": label_encoders['EmpDepartment'].transform([EmpDepartment])[0],
+        "EmpWorkLifeBalance": EmpWorkLifeBalance,
+        "Attrition": 1 if Attrition == "Yes" else 0,
+        "BusinessTravelFrequency": label_encoders['BusinessTravelFrequency'].transform([BusinessTravelFrequency])[0],
+        "EducationBackground": label_encoders['EducationBackground'].transform([EducationBackground])[0],
+        "TrainingTimesLastYear": TrainingTimesLastYear,
+        "Gender": label_encoders['Gender'].transform([Gender])[0]
+    }
+    
     input_df = pd.DataFrame([input_data])
-    feature_order = list(input_df.columns)
+
+    feature_order = [
+        "EmpEnvironmentSatisfaction", "EmpJobSatisfaction", "EmpLastSalaryHikePercent", 
+        "TotalWorkExperienceInYears", "ExperienceYearsAtThisCompany", "ExperienceYearsInCurrentRole", 
+        "EmpJobLevel", "YearsSinceLastPromotion", "YearsWithCurrManager", "EmpDepartment", 
+        "EmpWorkLifeBalance", "Attrition", "BusinessTravelFrequency", "EducationBackground", 
+        "TrainingTimesLastYear", "Gender"
+    ]
+    
+    input_df = input_df[feature_order]
+
     prediction = model.predict(input_df)[0]
     rating_text, rating_description = PERFORMANCE_RATING.get(prediction, (prediction, "Unknown"))
+
     st.subheader("Prediction Result")
     st.metric("Predicted Performance Rating", f"{rating_text} ({prediction})")
     st.write(f"**What this means:** {rating_description}")
     
     if hasattr(model, 'feature_importances_'):
         st.subheader("Feature Importance")
-        importance_df = pd.DataFrame({"Feature": feature_order, "Importance": model.feature_importances_})
-        importance_df = importance_df.sort_values(by="Importance", ascending=False)
+        importance_df = pd.DataFrame({"Feature": feature_order, "Importance": model.feature_importances_}).sort_values(by="Importance", ascending=False)
+
         fig, ax = plt.subplots()
         sns.barplot(y=importance_df["Feature"], x=importance_df["Importance"], palette="viridis", ax=ax)
         ax.set_xlabel("Importance Score")
