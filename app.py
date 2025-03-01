@@ -109,6 +109,7 @@ with st.form("employee_details"):
 
 if submit_button:
     input_df = pd.DataFrame([input_data])
+    feature_order = list(input_df.columns)
     prediction = model.predict(input_df)[0]
     rating_text, rating_description = PERFORMANCE_RATING.get(prediction, (prediction, "Unknown"))
     st.subheader("Prediction Result")
