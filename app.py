@@ -11,8 +11,8 @@ model = joblib.load('best_model.pkl')
 label_encoders = joblib.load('label_encoders.pkl')
 
 # Define mappings for categorical features
-EDUCATION_LEVELS = {
-    1: 'Below College', 2: 'College', 3: 'Bachelor', 4: 'Master', 5: 'Doctor'
+JOB_LEVELS = {
+    1: 'Level 1', 2: 'Level 2', 3: 'Level 3', 4: 'Level 4'
 }
 
 SATISFACTION_LEVELS = {
@@ -51,7 +51,7 @@ with st.form("employee_details"):
     with col2:
         ExperienceYearsAtThisCompany = st.number_input("Years at Company", min_value=0)
         ExperienceYearsInCurrentRole = st.number_input("Years in Current Role", min_value=0)
-        EmpJobLevel = st.selectbox("Job Level", list(EDUCATION_LEVELS.keys()), format_func=lambda x: EDUCATION_LEVELS[x])
+        EmpJobLevel = st.selectbox("Job Level", list(JOB_LEVELS.keys()), format_func=lambda x: JOB_LEVELS[x])
         YearsSinceLastPromotion = st.number_input("Years Since Last Promotion", min_value=0)
     
     with col3:
