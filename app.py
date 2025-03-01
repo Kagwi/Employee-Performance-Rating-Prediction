@@ -108,28 +108,20 @@ with st.form("employee_details"):
     submit_button = st.form_submit_button("Predict Performance Rating")
 
 if submit_button:
-    input_data = {
-        "EmpEnvironmentSatisfaction": EmpEnvironmentSatisfaction,
-        "EmpJobSatisfaction": EmpJobSatisfaction,
-        "EmpLastSalaryHikePercent": EmpLastSalaryHikePercent,
-        "TotalWorkExperienceInYears": TotalWorkExperienceInYears,
-        "ExperienceYearsAtThisCompany": ExperienceYearsAtThisCompany,
-        "ExperienceYearsInCurrentRole": ExperienceYearsInCurrentRole,
-        "EmpJobLevel": EmpJobLevel,
-        "YearsSinceLastPromotion": YearsSinceLastPromotion,
-        "YearsWithCurrManager": YearsWithCurrManager,
-        "EmpDepartment": label_encoders['EmpDepartment'].transform([EmpDepartment])[0],
-        "EmpWorkLifeBalance": EmpWorkLifeBalance,
-        "Attrition": 1 if Attrition == "Yes" else 0,
-        "BusinessTravelFrequency": label_encoders['BusinessTravelFrequency'].transform([BusinessTravelFrequency])[0],
-        "EducationBackground": label_encoders['EducationBackground'].transform([EducationBackground])[0],
-        "TrainingTimesLastYear": TrainingTimesLastYear,
-        "Gender": label_encoders['Gender'].transform([Gender])[0]
-    }
-    
     input_df = pd.DataFrame([input_data])
     prediction = model.predict(input_df)[0]
     rating_text, rating_description = PERFORMANCE_RATING.get(prediction, (prediction, "Unknown"))
     st.subheader("Prediction Result")
     st.metric("Predicted Performance Rating", f"{rating_text} ({prediction})")
     st.write(f"**What this means:** {rating_description}")
+    
+    if hasattr(model, 'feature_importances_'):
+        st.subheader("Feature Importance")
+        importance_df = pd.DataFrame({"Feature": feature_order, "Importance": model.feature_importances_})
+        importance_df = importance_df.sort_values(by="Importance", ascending=False)
+        fig, ax = plt.subplots()
+        sns.barplot(y=importance_df["Feature"], x=importance_df["Importance"], palette="viridis", ax=ax)
+        ax.set_xlabel("Importance Score")
+        ax.set_ylabel("Feature")
+        ax.set_title("Feature Importance for Performance Prediction")
+        st.pyplot(fig)
