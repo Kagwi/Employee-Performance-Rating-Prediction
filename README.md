@@ -1,6 +1,6 @@
 # Employee Attrition Prediction App
 
-![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
+![Streamlit](https://employee-performance-rating-prediction-kagwi.streamlit.app/)
 
 A Streamlit web application for predicting employee attrition using a pre-trained Random Forest classifier.
 
