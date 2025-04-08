@@ -2,9 +2,7 @@
 
 # Streamlit App
 
-[![Streamlit Logo](https://upload.wikimedia.org/wikipedia/commons/2/20/Streamlit_logo.svg)](http://your-streamlit-app-link)
-
-[Click here to view the Streamlit App](http://your-streamlit-app-link)
+[Click here to view the Streamlit App]([http://your-streamlit-app-link](https://employee-performance-rating-prediction-kagwi.streamlit.app/))
 
 A Streamlit web application for predicting employee attrition using a pre-trained Random Forest classifier.
 
